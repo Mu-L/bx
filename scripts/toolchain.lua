@@ -290,13 +290,13 @@ function toolchain(_buildDir, _libDir)
 			location (path.join(_buildDir, "projects", _ACTION .. "-tvos-simulator"))
 
 		elseif "linux-gcc" == _OPTIONS["gcc"] then
-			location (path.join(_buildDir, "projects", _ACTION .. "-linux"))
+			location (path.join(_buildDir, "projects", _ACTION .. "-linux-gcc"))
 
 		elseif "linux-gcc-afl" == _OPTIONS["gcc"] then
 			premake.gcc.cc  = "afl-gcc"
 			premake.gcc.cxx = "afl-g++"
 			premake.gcc.ar  = "ar"
-			location (path.join(_buildDir, "projects", _ACTION .. "-linux"))
+			location (path.join(_buildDir, "projects", _ACTION .. "-linux-gcc"))
 
 		elseif "linux-clang" == _OPTIONS["gcc"] then
 			premake.gcc.cc  = "clang"
@@ -509,6 +509,7 @@ function toolchain(_buildDir, _libDir)
 		}
 
 	configuration { "Release" }
+		targetsuffix "Release"
 		flags {
 			"NoBufferSecurityCheck",
 			"OptimizeSpeed",
@@ -516,10 +517,10 @@ function toolchain(_buildDir, _libDir)
 		defines {
 			"NDEBUG",
 		}
-		targetsuffix "Release"
 
 	configuration { "*-clang" }
 		buildoptions {
+			"-Wno-nan-infinity-disabled",
 			"-Wno-tautological-constant-compare",
 		}
 
@@ -623,12 +624,12 @@ function toolchain(_buildDir, _libDir)
 			"MINGW_HAS_SECURE_API=1",
 		}
 		buildoptions {
+			"-Wa,-mbig-obj",
+			"-Wundef",
 			"-Wunused-value",
 			"-fdata-sections",
 			"-ffunction-sections",
 			"-msse4.2",
-			"-Wunused-value",
-			"-Wundef",
 		}
 		linkoptions {
 			"-Wl,--gc-sections",

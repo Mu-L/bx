@@ -26,7 +26,7 @@ bool testAssertHandler(const bx::Location& _location, const char* _format, va_li
 	return true;
 }
 
-int runAllTests(int _argc, const char* _argv[])
+int runAllTests(int32_t _argc, const char* _argv[])
 {
 	bx::setAssertHandler(testAssertHandler);
 
@@ -36,9 +36,9 @@ int runAllTests(int _argc, const char* _argv[])
 		", Arch: " BX_ARCH_NAME
 		", OS: " BX_PLATFORM_NAME
 		", CRT: " BX_CRT_NAME
-		", C++: " BX_CPP_NAME
-		", SIMD"
+		", Features: " BX_CPP_NAME
 #if BX_SIMD_SUPPORTED
+		", SIMD"
 #	if BX_SIMD_AVX
 		", AVX"
 #	endif // BX_SIMD_AVX
@@ -51,8 +51,6 @@ int runAllTests(int _argc, const char* _argv[])
 #	if BX_SIMD_SSE
 		", SSE"
 #	endif // BX_SIMD_SSE
-#else
-		": Not supported."
 #endif // BX_SIMD_SUPPORTED
 
 		", Date: " __DATE__
@@ -60,12 +58,25 @@ int runAllTests(int _argc, const char* _argv[])
 		"\n\n"
 		);
 
+	bx::printf("Args:\n");
+
+	for (int32_t ii = 0; ii < _argc; ++ii)
+	{
+		bx::printf("\t%2d: \"%s\"", ii, _argv[ii]);
+	}
+
+	bx::printf("\n\n");
+
 	using namespace Catch;
 
 	Session session;
 
 	ConfigData config;
-	config.defaultColourMode = BX_PLATFORM_EMSCRIPTEN ? ColourMode::None : ColourMode::PlatformDefault;
+	config.defaultColourMode = BX_PLATFORM_EMSCRIPTEN
+		? ColourMode::None
+		: ColourMode::PlatformDefault
+		;
+	config.showDurations = ShowDurations::Always;
 
 	session.useConfigData(config);
 
