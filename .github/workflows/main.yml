@@ -21,12 +21,12 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Prepare
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v2
       - name: Build
         shell: cmd
         run: |
@@ -44,13 +44,13 @@ jobs:
       matrix:
         include: [
           { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
-          { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
+#          { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
         ]
     name: mingw-${{ matrix.msystem }}
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
@@ -80,11 +80,11 @@ jobs:
           { config: debug, binsuffix: Debug },
           { config: release, binsuffix: Release },
         ]
-    name: linux-${{ matrix.config }}64
-    runs-on: ubuntu-22.04
+    name: linux-gcc-${{ matrix.config }}64
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
@@ -92,7 +92,7 @@ jobs:
         run: |
           cd bx
           tools/bin/linux/genie --gcc=linux-gcc gmake
-          make -R -C .build/projects/gmake-linux config=${{ matrix.config }}64 -j$(nproc)
+          make -R -C .build/projects/gmake-linux-gcc config=${{ matrix.config }}64 -j$(nproc)
       - name: Check
         run: |
           cd bx
@@ -106,10 +106,10 @@ jobs:
           { config: release, binsuffix: Release },
         ]
     name: osx-x64-${{ matrix.config }}
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
@@ -122,3 +122,30 @@ jobs:
         run: |
           cd bx
           ".build/osx-x64/bin/bx.test${{ matrix.binsuffix}}" -d yes
+  emscripten:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: debug, binsuffix: Debug },
+          { config: release, binsuffix: Release },
+        ]
+    name: wasm-${{ matrix.config }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout bx
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - uses: mymindstorm/setup-emsdk@v14
+      - uses: browser-actions/setup-chrome@v1
+      - name: Build
+        run: |
+          cd bx
+          tools/bin/linux/genie --gcc=wasm gmake
+          make -C .build/projects/gmake-wasm config=${{ matrix.config }} -j$(nproc) EMSCRIPTEN=$EMSDK/upstream/emscripten
+      - name: Check
+        run: |
+          cd bx
+#          npx http-server -o .build/wasm/bin/ & chromium http://127.0.0.1:8080/.build/wasm/bin/bx.testRelease.html
